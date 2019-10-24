@@ -9,31 +9,17 @@ from tkinter import *
 
 # exp0   exp1
 # exp2   exp3
+# same for stim
 
+# states:
+# instructions, copy task ref, copy task canvas, setup
 
-def drawLeft(canvas, data):
+def drawCopyTaskCanvas(canvas, data):
+    canvas.create_text(data.width/2, data.height-2.5*data.margin, text="Go to Reference", font="Arial 16")
+    canvas.create_rectangle(data.width/2-100, data.height-3*data.margin, data.width/2+100, data.height-2*data.margin)
+    canvas.create_text(data.width/2, data.margin, text="Canvas", font="Arial 24 bold")
     if data.condition == 0:
-        for r in range(len(data.stimulus)):
-            for c in range(len(data.stimulus[0])):
-                color = 'black' if data.stimulus[r][c] != 0 else 'white'
-                canvas.create_rectangle(data.rect_width*c+data.margin,
-                                        data.rect_height*r+2*data.margin,
-                                        data.rect_width*(c+1)+data.margin,
-                                        data.rect_height*(r+1)+2*data.margin,
-                                        fill=color)
-    else:
-        for r in range(len(data.stimulus)):
-            for c in range(len(data.stimulus[0])):
-                color = 'black' if data.stimulus[r][c] != 0 else 'white'
-                canvas.create_rectangle(data.rect_width*c+data.margin,
-                                        data.rect_height*r+2*data.margin,
-                                        data.rect_width*(c+1)+data.margin,
-                                        data.rect_height*(r+1)+2*data.margin,
-                                        fill=color)
-
-def drawRight(canvas, data):
-    offset = data.width/2 + data.margin
-    if data.condition == 0:
+        offset = data.width/2 - data.grid_width/2 # for centering grid
         for r in range(len(data.exp0)):
             for c in range(len(data.exp0[0])):
                 color = 'black' if data.exp0[r][c] != 0 else 'white'
@@ -42,7 +28,8 @@ def drawRight(canvas, data):
                                         data.rect_width*(c+1)+offset,
                                         data.rect_height*(r+1)+2*data.margin,
                                         fill=color)
-    else:
+    elif data.condition == 1:
+        offset = data.width/2 - data.grid_width # for centering grid
         for r in range(len(data.exp0)):
             for c in range(len(data.exp0[0])):
                 color = 'black' if data.exp0[r][c] != 0 else 'white'
@@ -63,17 +50,17 @@ def drawRight(canvas, data):
             for c in range(len(data.exp2[0])):
                 color = 'black' if data.exp2[r][c] != 0 else 'white'
                 canvas.create_rectangle(data.rect_width*c+offset,
-                                        data.rect_height*r+2*data.margin+data.grid_height,
+                                        data.rect_height*r+2*data.margin+data.grid_width,
                                         data.rect_width*(c+1)+offset,
-                                        data.rect_height*(r+1)+2*data.margin+data.grid_height,
+                                        data.rect_height*(r+1)+2*data.margin+data.grid_width,
                                         fill=color)
         for r in range(len(data.exp3)):
             for c in range(len(data.exp3[0])):
                 color = 'black' if data.exp3[r][c] != 0 else 'white'
                 canvas.create_rectangle(data.rect_width*c+offset+data.grid_width,
-                                        data.rect_height*r+2*data.margin+data.grid_height,
+                                        data.rect_height*r+2*data.margin+data.grid_width,
                                         data.rect_width*(c+1)+offset+data.grid_width,
-                                        data.rect_height*(r+1)+2*data.margin+data.grid_height,
+                                        data.rect_height*(r+1)+2*data.margin+data.grid_width,
                                         fill=color)
 
 def create2dlist(width=4, height=4):
@@ -85,19 +72,26 @@ def create2dlist(width=4, height=4):
 
 def init(data):
     # load data.xyz as appropriate
-    data.stimulus = create2dlist()
+    data.stim0 = create2dlist()
+    data.stim1 = create2dlist()
+    data.stim2 = create2dlist()
+    data.stim3 = create2dlist()
     data.exp0 = create2dlist()
     data.exp1 = create2dlist()
     data.exp2 = create2dlist()
     data.exp3 = create2dlist()
-    data.margin = 120
+    data.condition = 0 # default
+    data.margin = 60
     data.rect_width = 90
     data.rect_height = 90
     data.grid_width = data.rect_width * 4
     data.grid_height = data.rect_height * 4
 
 def fillRect(event, data):
-    offset = data.width/2 + data.margin
+    if data.condition == 0:
+        offset = data.width/2 - data.grid_width/2 # for centering grid
+    elif data.condition == 1:
+        offset = data.width/2 - data.grid_width # for centering grid
     for r in range(len(data.exp0)):
         for c in range(len(data.exp0[0])):
             if (event.x > data.rect_width*c+offset and
@@ -127,30 +121,110 @@ def fillRect(event, data):
                 event.y < data.rect_height*(r+1)+2*data.margin+data.grid_height):
                 data.exp3[r][c] = 1 if data.exp3[r][c] == 0 else 0
 
+def switch_button_pressed(event, data):
+    if (event.x > data.width/2-100 and event.x < data.width/2+100 and
+        event.y > data.height-3*data.margin and event.y < data.height-2*data.margin):
+        print(data.state)
+        return True
+    return False
+
+def mousePressedCopyRef(event, data):
+    if switch_button_pressed(event,data):
+        data.state = 'copy task canvas'
+
+def mousePressedCopyCanvas(event, data):
+    fillRect(event,data)
+    if switch_button_pressed(event,data):
+        data.state = 'copy task ref'
+
 def mousePressed(event, data):
-    fillRect(event, data)
+    if data.state == 'copy task ref':
+        mousePressedCopyRef(event,data)
+    elif data.state == 'copy task canvas':
+        mousePressedCopyCanvas(event,data)
 
 def keyPressed(event, data):
-    # use event.char and event.keysym
-    pass
+    if data.state == 'instructions':
+        if event.char == '0':
+            data.conditon = 0
+            data.state = 'copy task ref'
+        elif event.char == '1':
+            data.condition = 1
+            data.state = 'copy task ref'
 
 def timerFired(data):
     pass
 
+def drawCopyTaskRef(canvas, data):
+    canvas.create_text(data.width/2, data.height-2.5*data.margin, text="Go to Canvas", font="Arial 16")
+    canvas.create_rectangle(data.width/2-100, data.height-3*data.margin, data.width/2+100, data.height-2*data.margin)
+    canvas.create_text(data.width/2, data.margin, text="Reference", font="Arial 24 bold")
+    if data.condition == 0:
+        offset = data.width/2 - data.grid_width/2 # for centering grid
+        for r in range(len(data.stim0)):
+            for c in range(len(data.stim0[0])):
+                color = 'black' if data.stim0[r][c] != 0 else 'white'
+                canvas.create_rectangle(data.rect_width*c+offset,
+                                        data.rect_height*r+2*data.margin,
+                                        data.rect_width*(c+1)+offset,
+                                        data.rect_height*(r+1)+2*data.margin,
+                                        fill=color)
+    elif data.condition == 1:
+        offset = data.width/2 - data.grid_width # for centering grid
+        for r in range(len(data.stim0)):
+            for c in range(len(data.stim0[0])):
+                color = 'black' if data.stim0[r][c] != 0 else 'white'
+                canvas.create_rectangle(data.rect_width*c+offset,
+                                        data.rect_height*r+2*data.margin,
+                                        data.rect_width*(c+1)+offset,
+                                        data.rect_height*(r+1)+2*data.margin,
+                                        fill=color)
+        for r in range(len(data.stim1)):
+            for c in range(len(data.stim1[0])):
+                color = 'black' if data.stim1[r][c] != 0 else 'white'
+                canvas.create_rectangle(data.rect_width*c+offset+data.grid_width,
+                                        data.rect_height*r+2*data.margin,
+                                        data.rect_width*(c+1)+offset+data.grid_width,
+                                        data.rect_height*(r+1)+2*data.margin,
+                                        fill=color)
+        for r in range(len(data.stim2)):
+            for c in range(len(data.stim2[0])):
+                color = 'black' if data.stim2[r][c] != 0 else 'white'
+                canvas.create_rectangle(data.rect_width*c+offset,
+                                        data.rect_height*r+2*data.margin+data.grid_width,
+                                        data.rect_width*(c+1)+offset,
+                                        data.rect_height*(r+1)+2*data.margin+data.grid_width,
+                                        fill=color)
+        for r in range(len(data.stim2)):
+            for c in range(len(data.stim2[0])):
+                color = 'black' if data.stim2[r][c] != 0 else 'white'
+                canvas.create_rectangle(data.rect_width*c+offset+data.grid_width,
+                                        data.rect_height*r+2*data.margin+data.grid_width,
+                                        data.rect_width*(c+1)+offset+data.grid_width,
+                                        data.rect_height*(r+1)+2*data.margin+data.grid_width,
+                                        fill=color)
+
+def drawInstructions(canvas, data):
+    canvas.create_text(data.width/2, data.height/2, text="Instructions Go Here\nPress [Space] to Continue")
+
+
 def redrawAll(canvas, data):
-    # draw in canvas
-    drawLeft(canvas,data)
-    canvas.create_line(data.width/2,
-                       0,
-                       data.width/2,
-                       data.height)
-    drawRight(canvas,data)
+    if data.state == 'setup':
+        drawSetup(canvas,data)
+    elif data.state == 'instructions':
+        drawInstructions(canvas,data)
+    elif data.state == 'copy task ref':
+        drawCopyTaskRef(canvas,data)
+    elif data.state == 'copy task canvas':
+        drawCopyTaskCanvas(canvas,data)
+    else:
+        return # we should never reach this state
 
 ####################################
 # use the run function as-is
 ####################################
 
-def run(width=300, height=300, condition=0):
+def run(width=300, height=300):
     def redrawAllWrapper(canvas, data):
         canvas.delete(ALL)
         canvas.create_rectangle(0, 0, data.width, data.height,
@@ -177,7 +251,7 @@ def run(width=300, height=300, condition=0):
     data.width = width
     data.height = height
     data.timerDelay = 5 # milliseconds
-    data.condition = condition
+    data.state = 'instructions'
     init(data)
     # create the root and the canvas
     root = Tk()
@@ -193,4 +267,4 @@ def run(width=300, height=300, condition=0):
     root.mainloop()  # blocks until window is closed
     print("bye!")
 
-run(1920, 1080, 1)
+run(1920, 1080)
