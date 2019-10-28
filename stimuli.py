@@ -118,35 +118,58 @@ def print2dList(a):
 
 from patterns import *
 
+# practice stims
+
+practiceStimListLS =  [
+                        [pp1, blank(2), blank(3), blank(4), None],
+                        [blank(1), blank(2), blank(3), pp4, None]
+                      ]
+
+practiceStimListHS =  [
+                        [pp1, blank(2), blank(3), pp4, None],
+                        [blank(1), pp2, pp3, blank(4), None]
+                      ]
+
+def generateTrialListPractice(condtion):
+  if condition == "LS":
+    return practiceStimListLS
+  elif condition == "HS":
+    return practiceStimListHS
+  else:
+    print("ERROR: invalid condition")
+  return
+
+# copy stims
+
 # p1, p2, p3, p4 <---- high frequency
 # p5, p6, p7, p8 <---- low frequency
 
 stimListLS =  [ 
-                [p1, blank(2), blank(3), blank(4)],
-                [blank(1), p2, blank(3), blank(4)],
-                [blank(1), blank(2), p3, blank(4)],
-                [blank(1), blank(2), blank(3), p4],
-                [p5, blank(2), blank(3), blank(4)],
-                [blank(1), p6, blank(3), blank(4)],
-                [blank(1), blank(2), p7, blank(4)],
-                [blank(1), blank(2), blank(3), p8]
+                [p1, blank(2), blank(3), blank(4), "HF"],
+                [blank(1), p2, blank(3), blank(4), "HF"],
+                [blank(1), blank(2), p3, blank(4), "HF"],
+                [blank(1), blank(2), blank(3), p4, "HF"],
+                [p5, blank(2), blank(3), blank(4), "LF"],
+                [blank(1), p6, blank(3), blank(4), "LF"],
+                [blank(1), blank(2), p7, blank(4), "LF"],
+                [blank(1), blank(2), blank(3), p8, "LF"]
               ]
 
 # (p1, p2), (p3, p4), (p9, p11), (p10, p12) <---- high frequency
 # (p5, p6), (p7, p8), (p13, p16), (p14, p15) <---- low frequency
 
 stimListHS =  [ 
-                [p1, p2, blank(3), blank(4)],
-                [blank(1), blank(2), p3, p4],
-                [p9, blank(2), p11, blank(4)],
-                [blank(1), p10, blank(3), p12],
-                [p5, p6, blank(3), blank(4)],
-                [blank(1), blank(2), p7, p8],
-                [p13, blank(2), blank(3), p16],
-                [blank(1), p14, p15, blank(4)]
+                [p1, p2, blank(3), blank(4), "HF"],
+                [blank(1), blank(2), p3, p4, "HF"],
+                [p9, blank(2), p11, blank(4), "HF"],
+                [blank(1), p10, blank(3), p12, "HF"],
+                [p5, p6, blank(3), blank(4), "LF"],
+                [blank(1), blank(2), p7, p8, "LF"],
+                [p13, blank(2), blank(3), p16, "LF"],
+                [blank(1), p14, p15, blank(4), "LF"]
               ]
 
-def generateTrialList(condition):
+def generateTrialListCopy(condition):
   stimList = []
   L = []
   if condition == "LS":
@@ -156,11 +179,46 @@ def generateTrialList(condition):
   else:
     print("ERROR: invalid condition")
     return L
-  for i in range(4):
-    for freq in range(8):
-      L.append(stimList[i])
-  for i in range(4, 8):
-    for freq in range(2):
-      L.append(stimList[i])
+  for stim in stimList:
+    if stim[4] not in ["HF", "LF"]:
+      print("ERROR: invalid frequency")
+      return
+    freq = 8 if stim[4] == "HF" else 2
+    for i in range(freq):
+        L.append(stim)
+  random.shuffle(L)
+  return L
+
+# recall stims
+
+recallStimList =  [ 
+                    [p1, p2, blank(3), blank(4), "HF"],     # 2 quadrants filled
+                    [blank(1), blank(2), p3, p4, "HF"],
+                    [p9, blank(2), p11, blank(4), "HF"],
+                    [blank(1), p10, blank(3), p12, "HF"],
+                    [p5, p6, blank(3), blank(4), "LF"],
+                    [blank(1), blank(2), p7, p8, "LF"],
+                    [p13, blank(2), blank(3), p16, "LF"],
+                    [blank(1), p14, p15, blank(4), "LF"],
+                    [p17, blank(2), p19, blank(4), "NF"],
+                    [blank(1), p18, blank(3), p20, "NF"],
+                    [p21, blank(2), blank(3), p24, "NF"],
+                    [blank(1), p22, p23, blank(4), "NF"],
+                    [p1, p2, p3, p4, "HF"],                 # 4 quadrants filled
+                    [p9, p10, p11, p12, "HF"],
+                    [p1, p10, p11, p4, "HF"],
+                    [p9, p2, p3, p12, "HF"],
+                    [p5, p6, p7, p8, "LF"],
+                    [p13, p14, p15, p16, "LF"],
+                    [p5, p14, p7, p16, "LF"],
+                    [p13, p6, p15, p8, "LF"],
+                    [p17, p18, p19, p20, "NF"],
+                    [p21, p22, p23, p24, "NF"],
+                    [p17, p18, p23, p24, "NF"],
+                    [p21, p22, p19, p20, "NF"]
+                  ]
+
+def generateTrialListRecall(condition=None):
+  L = copy.deepcopy(recallStimList)
   random.shuffle(L)
   return L
