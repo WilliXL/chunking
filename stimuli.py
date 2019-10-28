@@ -222,3 +222,12 @@ def generateTrialListRecall(condition=None):
   L = copy.deepcopy(recallStimList)
   random.shuffle(L)
   return L
+
+# pattern to id
+
+def getPatternID(p):
+  patterns = [blank(1)[0],
+              p1[0], p2[0], p3[0], p4[0], p5[0], p6[0], p7[0], p8[0],
+              p9[0], p10[0], p11[0], p12[0], p13[0], p14[0], p15[0], p16[0],
+              p17[0], p18[0], p19[0], p20[0], p21[0], p22[0], p23[0], p24[0]]
+  return patterns.index(p)
