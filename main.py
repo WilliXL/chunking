@@ -320,10 +320,10 @@ def init(data):
     data.total_practice_trials = len(data.practice_trials)
 
     data.copy_trial = 0
-    data.total_copy_trials = 5
+    data.total_copy_trials = len(data.copy_trials)
 
     data.recall_trial = 0
-    data.total_recall_trials = 5
+    data.total_recall_trials = len(data.recall_trials)
 
     data.trial = data.trials[data.practice_trial]
     data.stim0 = create2dlist()
