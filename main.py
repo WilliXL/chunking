@@ -4,24 +4,25 @@
 from tkinter import *
 import time
 import argparse
-import patterns
+import stimuli
+
+
+# q1   q2
+# q3   q4
+
 
 ####################################
-# customize these functions
+# Draw Functions
 ####################################
 
-# exp0   exp1
-# exp2   exp3
-# same for stim
-
-# states:
-# instructions, copy task ref, copy task canvas, setup
-
-def drawCopyTaskCanvas(canvas, data):
-    canvas.create_text(data.width/2, data.height-2.5*data.margin, text="Go to Reference", font="Arial 16")
-    canvas.create_rectangle(data.width/2-100, data.height-3*data.margin, data.width/2+100, data.height-2*data.margin)
+def drawTaskCanvas(canvas, data):
+    if data.state == 'copy task canvas':
+        canvas.create_text(data.width/2, data.height-2.5*data.margin, text="Go to Reference", font="Arial 16")
+        canvas.create_rectangle(data.width/2-100, data.height-3*data.margin, data.width/2+100, data.height-2*data.margin)
+        time_remaining = "Time Remaining: " + ("%d" % (data.copy_time_remaining / 1000))
+    if data.state == 'recall task canvas':
+        time_remaining = "Time Remaining: " + (("%d" % (data.recall_time_remaining / 1000)))
     canvas.create_text(data.width/2, data.margin, text="Canvas", font="Arial 24 bold")
-    time_remaining = "Time Remaining: " + ("%d" % (data.copy_time_remaining / 1000))
     canvas.create_text(2.25*data.margin,data.height-2.25*data.margin, text=time_remaining, font="Arial 16")
     canvas.create_text(data.width-2.25*data.margin, data.height-2.5*data.margin, text="Done!", font="Arial 16")
     canvas.create_rectangle(data.width-data.margin-150, data.height-3*data.margin, data.width-data.margin, data.height-2*data.margin)
@@ -59,197 +60,18 @@ def drawCopyTaskCanvas(canvas, data):
                                     data.rect_height*(r+1)+2*data.margin+data.grid_width,
                                     fill=color)
 
-def create2dlist(width=4, height=4):
-    ret = []
-    for h in range(height):
-        L = [0] * width
-        ret.append(L)
-    return ret
-
-def init(data):
-    # load data.xyz as appropriate
-    data.stim0 = create2dlist()
-    data.stim1 = create2dlist()
-    data.stim2 = create2dlist()
-    data.stim3 = create2dlist()
-    for p in [patterns.p1, patterns.p2, patterns.p3, patterns.p4]:
-        if p[1] == 1:
-            data.stim0 = p[0]
-        elif p[1] == 2:
-            data.stim1 = p[0]
-        elif p[1] == 3:
-            data.stim2 = p[0]
-        elif p[1] == 4:
-            data.stim3 = p[0]
-    data.exp0 = create2dlist()
-    data.exp1 = create2dlist()
-    data.exp2 = create2dlist()
-    data.exp3 = create2dlist()
-    data.condition = 0 # default
-    data.margin = 60
-    data.rect_width = 90
-    data.rect_height = 90
-    data.grid_width = data.rect_width * 4
-    data.grid_height = data.rect_height * 4
-    data.copy_time_remaining = 15 * 1000 # 10 seconds
-    data.correctness = None
-    data.feedback_time = 2 * 1000 # 2 seconds
-    data.copy = False
-    data.copy_trial = 0
-    data.total_copy_trials = 20
-    data.practice = False
-    data.practice_trial = 0
-    data.total_practice_trials = 5
-    data.recall = False
-    data.recall_trial = 0
-    data.total_recall_trials = 20
-
-def fillRect(event, data):
-    if data.condition == 0:
-        offset = data.width/2 - data.grid_width/2 # for centering grid
-    elif data.condition == 1:
-        offset = data.width/2 - data.grid_width # for centering grid
-    for r in range(len(data.exp0)):
-        for c in range(len(data.exp0[0])):
-            if (event.x > data.rect_width*c+offset and
-                event.y > data.rect_height*r+2*data.margin and
-                event.x < data.rect_width*(c+1)+offset and
-                event.y < data.rect_height*(r+1)+2*data.margin):
-                data.exp0[r][c] = 1 if data.exp0[r][c] == 0 else 0
-    for r in range(len(data.exp1)):
-        for c in range(len(data.exp1[0])):
-            if (event.x > data.rect_width*c+offset+data.grid_width and
-                event.y > data.rect_height*r+2*data.margin and
-                event.x < data.rect_width*(c+1)+offset+data.grid_width and
-                event.y < data.rect_height*(r+1)+2*data.margin):
-                data.exp1[r][c] = 1 if data.exp1[r][c] == 0 else 0
-    for r in range(len(data.exp2)):
-        for c in range(len(data.exp2[0])):
-            if (event.x > data.rect_width*c+offset and
-                event.y > data.rect_height*r+2*data.margin+data.grid_height and
-                event.x < data.rect_width*(c+1)+offset and
-                event.y < data.rect_height*(r+1)+2*data.margin+data.grid_height):
-                data.exp2[r][c] = 1 if data.exp2[r][c] == 0 else 0
-    for r in range(len(data.exp3)):
-        for c in range(len(data.exp3[0])):
-            if (event.x > data.rect_width*c+offset+data.grid_width and
-                event.y > data.rect_height*r+2*data.margin+data.grid_height and
-                event.x < data.rect_width*(c+1)+offset+data.grid_width and
-                event.y < data.rect_height*(r+1)+2*data.margin+data.grid_height):
-                data.exp3[r][c] = 1 if data.exp3[r][c] == 0 else 0
-
-def reset_exp(data):
-    data.exp0 = create2dlist()
-    data.exp1 = create2dlist()
-    data.exp2 = create2dlist()
-    data.exp3 = create2dlist()
-
-def collect_statistics(data):
-    if data.practice:
-        return
-    return
-
-def check_correctness(data):
-    assert(data.correctness == None) # otherwise some shit is wrong
-    exp_list  = [data.exp0, data.exp1, data.exp2, data.exp3]
-    stim_list = [data.stim0, data.stim1, data.stim2, data.stim3]
-    for q in range(4): # 4 quadrants
-        exp  = exp_list[q]
-        stim = stim_list[q]
-        if exp != stim:
-            collect_statistics(data)
-            reset_exp(data)
-            data.copy_time_remaining = 15 * 1000 # reset to 10 seconds
-            return False
-    collect_statistics(data)
-    reset_exp(data)
-    data.copy_time_remaining = 15 * 1000 # reset to 10 seconds
-    return True
-
-def switch_button_pressed(event, data):
-    assert(data.state == 'copy task ref' or data.state == 'copy task canvas')
-    if (event.x > data.width/2-100 and event.x < data.width/2+100 and
-        event.y > data.height-3*data.margin and event.y < data.height-2*data.margin):
-        return True
-    return False
-
-def done_button_pressed(event, data):
-    assert(data.state == 'copy task ref' or data.state == 'copy task canvas')
-    if (event.x > data.width-data.margin-150 and event.x < data.width-data.margin and
-        event.y > data.height-3*data.margin and event.y < data.height-2*data.margin):
-        return True
-    return False
-
-def mousePressedCopyRef(event, data):
-    if switch_button_pressed(event,data):
-        data.state = 'copy switch canvas'
-    elif done_button_pressed(event,data):
-        data.correctness = check_correctness(data)
-        if data.correctness:
-            data.state = 'copy correct'
-        else:
-            data.state = 'copy wrong'
-        data.correctness = None
-        if data.practice:
-            data.practice_trial += 1
-            if data.practice_trial == data.total_practice_trials:
-                data.practice = False
-                data.state = 'ready copy task'
-
-def mousePressedCopyCanvas(event, data):
-    fillRect(event,data)
-    if switch_button_pressed(event,data):
-        data.state = 'copy switch ref'
-    elif done_button_pressed(event,data):
-        data.correctness = check_correctness(data)
-        if data.correctness:
-            data.state = 'copy correct'
-        else:
-            data.state = 'copy wrong'
-        data.correctness = None
-        if data.practice:
-            data.practice_trial += 1
-            if data.practice_trial == data.total_practice_trials:
-                data.practice = False
-                data.state = 'ready copy task'
-
-def mousePressed(event, data):
+def drawTaskRef(canvas, data):
     if data.state == 'copy task ref':
-        mousePressedCopyRef(event,data)
-    elif data.state == 'copy task canvas':
-        mousePressedCopyCanvas(event,data)
-
-def keyPressed(event, data):
-    if data.state == 'instructions':
-        if event.char == ' ':
-            data.practice = True
-            data.state = 'copy task ref'
-    elif data.state == 'ready copy task':
-        if event.char == ' ':
-            data.state = 'copy task ref'
-
-def timerFired(data):
-    if data.state == 'copy task ref' or data.state == 'copy task canvas':
-        data.copy_time_remaining -= data.timerDelay * 10
-        if data.copy_time_remaining < 0:
-            data.state = 'copy wrong'
-            data.copy_time_remaining = 15 * 1000
-            return
-    if data.state == 'copy correct' or data.state == 'copy wrong':
-        data.feedback_time -= data.timerDelay * 10
-        if data.feedback_time < 0:
-            data.state = 'copy task ref'
-            data.feedback_time = 2 * 1000
-            return
-
-def drawCopyTaskRef(canvas, data):
-    canvas.create_text(data.width/2, data.height-2.5*data.margin, text="Go to Canvas", font="Arial 16")
-    canvas.create_rectangle(data.width/2-100, data.height-3*data.margin, data.width/2+100, data.height-2*data.margin)
+        canvas.create_text(data.width/2, data.height-2.5*data.margin, text="Go to Canvas", font="Arial 16")
+        canvas.create_rectangle(data.width/2-100, data.height-3*data.margin, data.width/2+100, data.height-2*data.margin)
+        time_remaining = "Time Remaining: " + ("%d" % (data.copy_time_remaining / 1000))
+    if data.state == 'recall task ref':
+        time_remaining = "Time Remaining: " + (("%d" % (data.recall_presentation_time_remaining / 1000)))
     canvas.create_text(data.width/2, data.margin, text="Reference", font="Arial 24 bold")
-    time_remaining = "Time Remaining: " + ("%d" % (data.copy_time_remaining / 1000))
     canvas.create_text(2.25*data.margin,data.height-2.25*data.margin, text=time_remaining, font="Arial 16")
-    canvas.create_text(data.width-2.25*data.margin, data.height-2.5*data.margin, text="Done!", font="Arial 16")
-    canvas.create_rectangle(data.width-data.margin-150, data.height-3*data.margin, data.width-data.margin, data.height-2*data.margin)
+    if data.state != 'recall task ref':
+        canvas.create_text(data.width-2.25*data.margin, data.height-2.5*data.margin, text="Done!", font="Arial 16")
+        canvas.create_rectangle(data.width-data.margin-150, data.height-3*data.margin, data.width-data.margin, data.height-2*data.margin)
     offset = data.width/2 - data.grid_width # for centering grid
     for r in range(len(data.stim0)):
         for c in range(len(data.stim0[0])):
@@ -294,10 +116,15 @@ def drawReadyCopyTask(canvas, data):
                        text="This concludes the practice trials\nPress [Space] to begin copy task",
                        font="Arial 24")
 
-def drawCopyCorrect(canvas, data):
+def drawReadyRecallTask(canvas, data):
+    canvas.create_text(data.width/2, data.height/2,
+                       text="This concludes the copy trials\nPress [Space] to begin recall task",
+                       font="Arial 24")
+
+def drawCorrect(canvas, data):
     canvas.create_text(data.width/2, data.height/2, text="CORRECT!", font="Arial 24 bold", fill="green")
 
-def drawCopyWrong(canvas, data):
+def drawWrong(canvas, data):
     canvas.create_text(data.width/2, data.height/2, text="INCORRECT!", font="Arial 24 bold", fill="red")
 
 def drawCopySwitchCanvas(canvas, data):
@@ -308,6 +135,272 @@ def drawCopySwitchRef(canvas, data):
     canvas.create_rectangle(0, 0, data.width, data.height, fill='white', width=0)
     data.state = 'copy task ref'
 
+
+####################################
+# List Functions
+####################################
+
+def create2dlist(width=4, height=4):
+    ret = []
+    for h in range(height):
+        L = [0] * width
+        ret.append(L)
+    return ret
+
+def reset_exp(data):
+    data.exp0 = create2dlist()
+    data.exp1 = create2dlist()
+    data.exp2 = create2dlist()
+    data.exp3 = create2dlist()
+
+
+####################################
+# Canvas Interaction Functions
+####################################
+
+def fill_rect(event, data):
+    offset = data.width/2 - data.grid_width # for centering grid
+    for r in range(len(data.exp0)):
+        for c in range(len(data.exp0[0])):
+            if (event.x > data.rect_width*c+offset and
+                event.y > data.rect_height*r+2*data.margin and
+                event.x < data.rect_width*(c+1)+offset and
+                event.y < data.rect_height*(r+1)+2*data.margin):
+                data.exp0[r][c] = 1 if data.exp0[r][c] == 0 else 0
+    for r in range(len(data.exp1)):
+        for c in range(len(data.exp1[0])):
+            if (event.x > data.rect_width*c+offset+data.grid_width and
+                event.y > data.rect_height*r+2*data.margin and
+                event.x < data.rect_width*(c+1)+offset+data.grid_width and
+                event.y < data.rect_height*(r+1)+2*data.margin):
+                data.exp1[r][c] = 1 if data.exp1[r][c] == 0 else 0
+    for r in range(len(data.exp2)):
+        for c in range(len(data.exp2[0])):
+            if (event.x > data.rect_width*c+offset and
+                event.y > data.rect_height*r+2*data.margin+data.grid_height and
+                event.x < data.rect_width*(c+1)+offset and
+                event.y < data.rect_height*(r+1)+2*data.margin+data.grid_height):
+                data.exp2[r][c] = 1 if data.exp2[r][c] == 0 else 0
+    for r in range(len(data.exp3)):
+        for c in range(len(data.exp3[0])):
+            if (event.x > data.rect_width*c+offset+data.grid_width and
+                event.y > data.rect_height*r+2*data.margin+data.grid_height and
+                event.x < data.rect_width*(c+1)+offset+data.grid_width and
+                event.y < data.rect_height*(r+1)+2*data.margin+data.grid_height):
+                data.exp3[r][c] = 1 if data.exp3[r][c] == 0 else 0
+
+def switch_button_pressed(event, data):
+    assert(data.state == 'copy task ref' or data.state == 'copy task canvas')
+    if (event.x > data.width/2-100 and event.x < data.width/2+100 and
+        event.y > data.height-3*data.margin and event.y < data.height-2*data.margin):
+        return True
+    return False
+
+def done_button_pressed(event, data):
+    assert(data.state == 'copy task ref' or data.state == 'copy task canvas' or
+           data.state == 'recall task canvas')
+    if (event.x > data.width-data.margin-150 and event.x < data.width-data.margin and
+        event.y > data.height-3*data.margin and event.y < data.height-2*data.margin):
+        return True
+    return False
+
+def mousePressedCopyRef(event, data):
+    if switch_button_pressed(event,data):
+        data.state = 'copy switch canvas'
+    elif done_button_pressed(event,data):
+        data.correctness = check_correctness(data)
+        if data.correctness:
+            data.state = 'copy correct'
+        else:
+            data.state = 'copy wrong'
+        data.correctness = None
+        if data.practice:
+            data.practice_trial += 1
+        if data.copy:
+            data.copy_trial += 1
+
+def mousePressedCopyCanvas(event, data):
+    fill_rect(event,data)
+    if switch_button_pressed(event,data):
+        data.state = 'copy switch ref'
+    elif done_button_pressed(event,data):
+        data.correctness = check_correctness(data)
+        if data.correctness:
+            data.state = 'copy correct'
+        else:
+            data.state = 'copy wrong'
+        data.correctness = None
+        if data.practice:
+            data.practice_trial += 1
+        if data.copy:
+            data.copy_trial += 1
+
+def mousePressedRecallCanvas(event, data):
+    fill_rect(event,data)
+    if done_button_pressed(event,data):
+        data.correctness = check_correctness(data)
+        if data.correctness:
+            data.state = 'recall correct'
+        else:
+            data.state = 'recall wrong'
+        data.correctness = None
+        data.recall_trial += 1
+
+
+####################################
+# Utility Functions
+####################################
+
+def collect_statistics(data):
+    if data.practice:
+        return
+    return
+
+def check_correctness(data):
+    assert(data.correctness == None) # otherwise some shit is wrong
+    exp_list  = [data.exp0, data.exp1, data.exp2, data.exp3]
+    stim_list = [data.stim0, data.stim1, data.stim2, data.stim3]
+    for q in range(4): # 4 quadrants
+        exp  = exp_list[q]
+        stim = stim_list[q]
+        if exp != stim:
+            collect_statistics(data)
+            reset_exp(data)
+            data.copy_time_remaining = 15 * 1000 # reset to 10 seconds
+            data.trial = data.trials[data.copy_trial]
+            for p in data.trial:
+                if p[1] == 1:
+                    data.stim0 = p[0]
+                elif p[1] == 2:
+                    data.stim1 = p[0]
+                elif p[1] == 3:
+                    data.stim2 = p[0]
+                elif p[1] == 4:
+                    data.stim3 = p[0]
+            return False
+    collect_statistics(data)
+    reset_exp(data)
+    data.copy_time_remaining = 15 * 1000 # reset to 10 seconds
+    data.trial = data.trials[data.copy_trial]
+    for p in data.trial:
+        if p[1] == 1:
+            data.stim0 = p[0]
+        elif p[1] == 2:
+            data.stim1 = p[0]
+        elif p[1] == 3:
+            data.stim2 = p[0]
+        elif p[1] == 4:
+            data.stim3 = p[0]
+    return True
+
+
+####################################
+# Kosbie's Functions
+####################################
+
+def init(data):
+    # load data.xyz as appropriate
+    cond = "LS" if data.condition == 0 else "HS"
+    data.trials = stimuli.generateTrialList(cond)
+    data.copy = True
+    data.copy_trial = 0
+    data.total_copy_trials = len(data.trials)
+    data.trial = data.trials[data.copy_trial]
+    data.stim0 = create2dlist()
+    data.stim1 = create2dlist()
+    data.stim2 = create2dlist()
+    data.stim3 = create2dlist()
+    for p in data.trial:
+        if p[1] == 1:
+            data.stim0 = p[0]
+        elif p[1] == 2:
+            data.stim1 = p[0]
+        elif p[1] == 3:
+            data.stim2 = p[0]
+        elif p[1] == 4:
+            data.stim3 = p[0]
+    data.exp0 = create2dlist()
+    data.exp1 = create2dlist()
+    data.exp2 = create2dlist()
+    data.exp3 = create2dlist()
+    data.margin = 60
+    data.rect_width = 90
+    data.rect_height = 90
+    data.grid_width = data.rect_width * 4
+    data.grid_height = data.rect_height * 4
+    data.copy_time_remaining = 15 * 1000 # 15 seconds
+    data.correctness = None
+    data.feedback_time = 2 * 1000 # 2 seconds
+    data.practice = False
+    data.practice_trial = 0
+    data.total_practice_trials = 2
+    data.recall = False
+    data.recall_trial = 0
+    data.total_recall_trials = 2
+    data.recall_presentation_time_remaining = 5 * 1000 # 5 seconds
+    data.recall_time_remaining = 10 * 1000 # 10 seconds
+
+def mousePressed(event, data):
+    if data.state == 'copy task ref':
+        mousePressedCopyRef(event,data)
+    elif data.state == 'copy task canvas':
+        mousePressedCopyCanvas(event,data)
+    elif data.state == 'recall task canvas':
+        mousePressedRecallCanvas(event,data)
+
+def keyPressed(event, data):
+    if data.state == 'instructions':
+        if event.char == ' ':
+            data.practice = True
+            data.state = 'copy task ref'
+    elif data.state == 'ready copy task':
+        if event.char == ' ':
+            data.state = 'copy task ref'
+    elif data.state == 'ready recall task':
+        if event.char == ' ':
+            data.state = 'recall task ref'
+
+def timerFired(data):
+    if data.state == 'copy task ref' or data.state == 'copy task canvas':
+        data.copy_time_remaining -= data.timerDelay * 10
+        if data.copy_time_remaining < 0:
+            data.state = 'copy wrong'
+            data.copy_time_remaining = 15 * 1000
+            return
+    elif data.state == 'copy correct' or data.state == 'copy wrong':
+        data.feedback_time -= data.timerDelay * 10
+        if data.feedback_time < 0:
+            data.state = 'copy task ref'
+            data.feedback_time = 2 * 1000
+            if data.practice_trial == data.total_practice_trials:
+                data.practice = False
+                data.practice_trial = -1
+                data.copy = True
+                data.state = 'ready copy task'
+            if data.copy_trial == data.total_copy_trials:
+                data.copy = False
+                data.recall = True
+                data.copy_trial = -1
+                data.state = 'ready recall task'
+            return
+    elif data.state == 'recall correct' or data.state == 'recall wrong':
+        data.feedback_time -= data.timerDelay * 10
+        if data.feedback_time < 0:
+            data.state = 'recall task ref'
+            data.feedback_time = 2 * 1000
+    elif data.state == 'recall task ref':
+        data.recall_presentation_time_remaining -= data.timerDelay * 10
+        if data.recall_presentation_time_remaining < 0:
+            data.state = 'recall task canvas'
+            data.recall_presentation_time_remaining = 5 * 1000
+            return
+    elif data.state == 'recall task canvas':
+        data.recall_time_remaining -= data.timerDelay * 10
+        if data.recall_time_remaining < 0:
+            data.state = 'recall wrong'
+            data.recall_time_remaining = 10 * 1000
+            return
+
 def redrawAll(canvas, data):
     if data.state == 'setup':
         drawSetup(canvas,data)
@@ -316,21 +409,31 @@ def redrawAll(canvas, data):
     elif data.state == 'ready copy task':
         drawReadyCopyTask(canvas,data)
     elif data.state == 'copy task ref':
-        drawCopyTaskRef(canvas,data)
+        drawTaskRef(canvas,data)
     elif data.state == 'copy task canvas':
-        drawCopyTaskCanvas(canvas,data)
+        drawTaskCanvas(canvas,data)
+    elif data.state == 'recall task ref':
+        drawTaskRef(canvas,data)
+    elif data.state == 'recall task canvas':
+        drawTaskCanvas(canvas,data)
     elif data.state == 'copy switch canvas':
         drawCopySwitchCanvas(canvas,data)
         canvas.update()
-        time.sleep(0.25)
+        time.sleep(0.5)
     elif data.state == 'copy switch ref':
         drawCopySwitchRef(canvas,data)
         canvas.update()
-        time.sleep(0.25)
+        time.sleep(0.5)
+    elif data.state == 'ready recall task':
+        drawReadyRecallTask(canvas,data)
     elif data.state == 'copy correct':
-        drawCopyCorrect(canvas,data)
+        drawCorrect(canvas,data)
     elif data.state == 'copy wrong':
-        drawCopyWrong(canvas,data)
+        drawWrong(canvas,data)
+    elif data.state == 'recall correct':
+        drawCorrect(canvas,data)
+    elif data.state == 'recall wrong':
+        drawWrong(canvas,data)
     else:
         return # we should never reach this state
 
@@ -365,7 +468,7 @@ def run(name, condition, width=300, height=300): # thanks koz
     data.width = width
     data.height = height
     data.timerDelay = 5 # milliseconds
-    data.state = 'instructions'
+    data.state = 'copy task ref'
     data.id = name
     data.condition = condition
     init(data)
