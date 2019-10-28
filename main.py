@@ -250,12 +250,16 @@ def mousePressedRecallCanvas(event, data):
 
 def collect_statistics(data):
     if data.recall:
+        q1      = stimuli.getPatternID(data.trial[0][0])
+        q2      = stimuli.getPatternID(data.trial[1][0])
+        q3      = stimuli.getPatternID(data.trial[2][0])
+        q4      = stimuli.getPatternID(data.trial[3][0])
         name    = data.id
         size    = data.condition
         freq    = data.trial[4]
         rt      = 10 * 1000 - data.recall_time_remaining
         correct = data.correctness
-        df = pd.DataFrame([[name,size,freq,rt,correct]], columns=['id','size','freq','RT','correct'])
+        df = pd.DataFrame([[name,size,freq,q1,q2,q3,q4,rt,correct]], columns=['id','size','freq','q1','q2','q3','q4','RT','correct'])
         data.statistics = data.statistics.append(df)
 
 def check_correctness(data):
@@ -279,7 +283,9 @@ def check_correctness(data):
     data.recall_time_remaining = 10 * 1000 # reset to 10 seconds
     if data.recall:
         data.trial = data.trials[data.recall_trial]
-    else:
+    elif data.practice:
+        data.trial = data.trials[data.practice_trial]
+    elif data.copy:
         data.trial = data.trials[data.copy_trial]
     for p in [data.trial[0], data.trial[1], data.trial[2], data.trial[3]]:
         if p[1] == 1:
@@ -347,8 +353,8 @@ def init(data):
     data.feedback_time = 2 * 1000 # 2 seconds
     data.recall_presentation_time_remaining = 5 * 1000 # 5 seconds
     data.recall_time_remaining = 10 * 1000 # 10 seconds
-    data.statistics = pd.DataFrame([[-1,-1,-1,-1,-1]],
-                                    columns=['id','size','freq','RT','correct']) # first row will be dummy row
+    data.statistics = pd.DataFrame([[-1,-1,-1,-1,-1,-1,-1,-1,-1]],
+                                    columns=['id','size','freq','q1','q2','q3','q4','RT','correct']) # first row will be dummy row
 
 def mousePressed(event, data):
     if data.state == 'copy task ref':
@@ -365,12 +371,36 @@ def keyPressed(event, data):
             data.state = 'copy task ref'
     elif data.state == 'ready copy task':
         if event.char == ' ':
+            data.practice = False
+            data.copy = True
             data.state = 'copy task ref'
             data.trials = data.copy_trials
+            data.trial = data.trials[data.copy_trial]
+            for p in [data.trial[0], data.trial[1], data.trial[2], data.trial[3]]:
+                if p[1] == 1:
+                    data.stim0 = p[0]
+                elif p[1] == 2:
+                    data.stim1 = p[0]
+                elif p[1] == 3:
+                    data.stim2 = p[0]
+                elif p[1] == 4:
+                    data.stim3 = p[0]
     elif data.state == 'ready recall task':
         if event.char == ' ':
+            data.copy = False
+            data.recall = True
             data.state = 'recall task ref'
             data.trials = data.recall_trials
+            data.trial = data.trials[data.recall_trial]
+            for p in [data.trial[0], data.trial[1], data.trial[2], data.trial[3]]:
+                if p[1] == 1:
+                    data.stim0 = p[0]
+                elif p[1] == 2:
+                    data.stim1 = p[0]
+                elif p[1] == 3:
+                    data.stim2 = p[0]
+                elif p[1] == 4:
+                    data.stim3 = p[0]
 
 def timerFired(data):
     if data.state == 'copy task ref' or data.state == 'copy task canvas':
@@ -520,6 +550,8 @@ def run(name, condition, width=300, height=300): # thanks koz
     # and launch the app
     root.mainloop()  # blocks until window is closed
     print(data.statistics)
+    csv_name = "data/" + data.id + ".csv"
+    data.statistics.to_csv(csv_name)
     print("bye!")
 
 def main():
