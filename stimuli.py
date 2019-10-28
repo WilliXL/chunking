@@ -57,9 +57,9 @@ def isUsed(pattern):
     if pattern == p: return True
   return False
 
-def createRandomPattern(quadrant=None):
-  if quadrant == None:
-    quadrant = random.randint(1,4)
+def createRandomPattern(quadrant, filled=True):
+  if not filled:
+    return (copy.deepcopy(patternTemp), quadrant)
   indices = [i for i in range(0, 16)]
   while(True):
     indicesToFill = random.sample(indices, 4)
@@ -77,7 +77,7 @@ def superpose(g1, g2):
       resultGrid[i][j] = g1[i][j] + g2[i][j]
   return resultGrid
 
-###############################################################
+###############################################################################
 
 # Helper function for print2dList.
 # This finds the maximum length of the string
@@ -114,3 +114,53 @@ def print2dList(a):
         print(" ]", end="")
     print("]")
 
+###############################################################################
+
+from patterns import *
+
+# p1, p2, p3, p4 <---- high frequency
+# p5, p6, p7, p8 <---- low frequency
+
+stimListLS =  [ 
+                [p1, blank(2), blank(3), blank(4)],
+                [blank(1), p2, blank(3), blank(4)],
+                [blank(1), blank(2), p3, blank(4)],
+                [blank(1), blank(2), blank(3), p4],
+                [p5, blank(2), blank(3), blank(4)],
+                [blank(1), p6, blank(3), blank(4)],
+                [blank(1), blank(2), p7, blank(4)],
+                [blank(1), blank(2), blank(3), p8]
+              ]
+
+# (p1, p2), (p3, p4), (p9, p11), (p10, p12) <---- high frequency
+# (p5, p6), (p7, p8), (p13, p16), (p14, p15) <---- low frequency
+
+stimListHS =  [ 
+                [p1, p2, blank(3), blank(4)],
+                [blank(1), blank(2), p3, p4],
+                [p9, blank(2), p11, blank(4)],
+                [blank(1), p10, blank(3), p12],
+                [p5, p6, blank(3), blank(4)],
+                [blank(1), blank(2), p7, p8],
+                [p13, blank(2), blank(3), p16],
+                [blank(1), p14, p15, blank(4)]
+              ]
+
+def generateTrialList(condition):
+  stimList = []
+  L = []
+  if condition == "LS":
+    stimList = stimListLS
+  elif condition == "HS":
+    stimList = stimListHS
+  else:
+    print("ERROR: invalid condition")
+    return L
+  for i in range(4):
+    for freq in range(8):
+      L.append(stimList[i])
+  for i in range(4, 8):
+    for freq in range(2):
+      L.append(stimList[i])
+  random.shuffle(L)
+  return L
