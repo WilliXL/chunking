@@ -130,7 +130,7 @@ practiceStimListHS =  [
                         [blank(1), pp2, pp3, blank(4), None]
                       ]
 
-def generateTrialListPractice(condtion):
+def generateTrialListPractice(condition):
   if condition == "LS":
     return practiceStimListLS
   elif condition == "HS":

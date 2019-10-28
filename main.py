@@ -5,6 +5,8 @@ from tkinter import *
 import time
 import argparse
 import stimuli
+import numpy as np
+import pandas as pd
 
 
 # q1   q2
@@ -135,6 +137,10 @@ def drawCopySwitchRef(canvas, data):
     canvas.create_rectangle(0, 0, data.width, data.height, fill='white', width=0)
     data.state = 'copy task ref'
 
+def drawEnd(canvas, data):
+    canvas.create_text(data.width/2, data.height/2, text="END!", font="Arial 24 bold")
+
+
 
 ####################################
 # List Functions
@@ -208,43 +214,34 @@ def mousePressedCopyRef(event, data):
     if switch_button_pressed(event,data):
         data.state = 'copy switch canvas'
     elif done_button_pressed(event,data):
-        data.correctness = check_correctness(data)
-        if data.correctness:
+        check_correctness(data)
+        if data.correctness == 8*8:
             data.state = 'copy correct'
         else:
             data.state = 'copy wrong'
         data.correctness = None
-        if data.practice:
-            data.practice_trial += 1
-        if data.copy:
-            data.copy_trial += 1
 
 def mousePressedCopyCanvas(event, data):
     fill_rect(event,data)
     if switch_button_pressed(event,data):
         data.state = 'copy switch ref'
     elif done_button_pressed(event,data):
-        data.correctness = check_correctness(data)
-        if data.correctness:
+        check_correctness(data)
+        if data.correctness == 8*8:
             data.state = 'copy correct'
         else:
             data.state = 'copy wrong'
         data.correctness = None
-        if data.practice:
-            data.practice_trial += 1
-        if data.copy:
-            data.copy_trial += 1
 
 def mousePressedRecallCanvas(event, data):
     fill_rect(event,data)
     if done_button_pressed(event,data):
-        data.correctness = check_correctness(data)
-        if data.correctness:
+        check_correctness(data)
+        if data.correctness == 8*8:
             data.state = 'recall correct'
         else:
             data.state = 'recall wrong'
         data.correctness = None
-        data.recall_trial += 1
 
 
 ####################################
@@ -252,37 +249,39 @@ def mousePressedRecallCanvas(event, data):
 ####################################
 
 def collect_statistics(data):
-    if data.practice:
-        return
-    return
+    if data.recall:
+        name    = data.id
+        size    = data.condition
+        freq    = data.trial[4]
+        rt      = 10 * 1000 - data.recall_time_remaining
+        correct = data.correctness
+        df = pd.DataFrame([[name,size,freq,rt,correct]], columns=['id','size','freq','RT','correct'])
+        data.statistics = data.statistics.append(df)
 
 def check_correctness(data):
     assert(data.correctness == None) # otherwise some shit is wrong
     exp_list  = [data.exp0, data.exp1, data.exp2, data.exp3]
     stim_list = [data.stim0, data.stim1, data.stim2, data.stim3]
+    correct = 8*8
+    incorrect = 0
     for q in range(4): # 4 quadrants
         exp  = exp_list[q]
         stim = stim_list[q]
-        if exp != stim:
-            collect_statistics(data)
-            reset_exp(data)
-            data.copy_time_remaining = 15 * 1000 # reset to 10 seconds
-            data.trial = data.trials[data.copy_trial]
-            for p in data.trial:
-                if p[1] == 1:
-                    data.stim0 = p[0]
-                elif p[1] == 2:
-                    data.stim1 = p[0]
-                elif p[1] == 3:
-                    data.stim2 = p[0]
-                elif p[1] == 4:
-                    data.stim3 = p[0]
-            return False
+        for r in range(len(exp)):
+            for c in range(len(exp[r])):
+                if exp[r][c] != stim[r][c]:
+                    incorrect += 1
+    correct = correct - incorrect
+    data.correctness = correct
     collect_statistics(data)
     reset_exp(data)
-    data.copy_time_remaining = 15 * 1000 # reset to 10 seconds
-    data.trial = data.trials[data.copy_trial]
-    for p in data.trial:
+    data.copy_time_remaining = 15 * 1000 # reset to 15 seconds
+    data.recall_time_remaining = 10 * 1000 # reset to 10 seconds
+    if data.recall:
+        data.trial = data.trials[data.recall_trial]
+    else:
+        data.trial = data.trials[data.copy_trial]
+    for p in [data.trial[0], data.trial[1], data.trial[2], data.trial[3]]:
         if p[1] == 1:
             data.stim0 = p[0]
         elif p[1] == 2:
@@ -291,7 +290,7 @@ def check_correctness(data):
             data.stim2 = p[0]
         elif p[1] == 4:
             data.stim3 = p[0]
-    return True
+    return correct
 
 
 ####################################
@@ -300,17 +299,32 @@ def check_correctness(data):
 
 def init(data):
     # load data.xyz as appropriate
+
+    # INITIAL STATE
     cond = "LS" if data.condition == 0 else "HS"
-    data.trials = stimuli.generateTrialList(cond)
-    data.copy = True
+    data.copy_trials = stimuli.generateTrialListCopy(cond)
+    data.practice_trials = stimuli.generateTrialListPractice(cond)
+    data.recall_trials = stimuli.generateTrialListRecall(cond)
+    data.trials = data.practice_trials
+    data.practice = True
+    data.copy = False
+    data.recall = False
+
+    data.practice_trial = 0
+    data.total_practice_trials = len(data.practice_trials)
+
     data.copy_trial = 0
-    data.total_copy_trials = len(data.trials)
-    data.trial = data.trials[data.copy_trial]
+    data.total_copy_trials = 5
+
+    data.recall_trial = 0
+    data.total_recall_trials = 5
+
+    data.trial = data.trials[data.practice_trial]
     data.stim0 = create2dlist()
     data.stim1 = create2dlist()
     data.stim2 = create2dlist()
     data.stim3 = create2dlist()
-    for p in data.trial:
+    for p in [data.trial[0], data.trial[1], data.trial[2], data.trial[3]]:
         if p[1] == 1:
             data.stim0 = p[0]
         elif p[1] == 2:
@@ -331,14 +345,10 @@ def init(data):
     data.copy_time_remaining = 15 * 1000 # 15 seconds
     data.correctness = None
     data.feedback_time = 2 * 1000 # 2 seconds
-    data.practice = False
-    data.practice_trial = 0
-    data.total_practice_trials = 2
-    data.recall = False
-    data.recall_trial = 0
-    data.total_recall_trials = 2
     data.recall_presentation_time_remaining = 5 * 1000 # 5 seconds
     data.recall_time_remaining = 10 * 1000 # 10 seconds
+    data.statistics = pd.DataFrame([[-1,-1,-1,-1,-1]],
+                                    columns=['id','size','freq','RT','correct']) # first row will be dummy row
 
 def mousePressed(event, data):
     if data.state == 'copy task ref':
@@ -356,27 +366,44 @@ def keyPressed(event, data):
     elif data.state == 'ready copy task':
         if event.char == ' ':
             data.state = 'copy task ref'
+            data.trials = data.copy_trials
     elif data.state == 'ready recall task':
         if event.char == ' ':
             data.state = 'recall task ref'
+            data.trials = data.recall_trials
 
 def timerFired(data):
     if data.state == 'copy task ref' or data.state == 'copy task canvas':
-        data.copy_time_remaining -= data.timerDelay * 10
+        data.copy_time_remaining -= data.timerDelay * 5
         if data.copy_time_remaining < 0:
             data.state = 'copy wrong'
             data.copy_time_remaining = 15 * 1000
             return
     elif data.state == 'copy correct' or data.state == 'copy wrong':
-        data.feedback_time -= data.timerDelay * 10
+        data.feedback_time -= data.timerDelay * 5
         if data.feedback_time < 0:
             data.state = 'copy task ref'
             data.feedback_time = 2 * 1000
-            if data.practice_trial == data.total_practice_trials:
-                data.practice = False
-                data.practice_trial = -1
-                data.copy = True
-                data.state = 'ready copy task'
+            if data.practice:
+                data.practice_trial += 1
+                if data.practice_trial == data.total_practice_trials:
+                    data.practice = False
+                    data.practice_trial = -1
+                    data.copy = True
+                    data.state = 'ready copy task'
+                    return
+                data.trial = data.trials[data.practice_trial]
+                for p in [data.trial[0], data.trial[1], data.trial[2], data.trial[3]]:
+                    if p[1] == 1:
+                        data.stim0 = p[0]
+                    elif p[1] == 2:
+                        data.stim1 = p[0]
+                    elif p[1] == 3:
+                        data.stim2 = p[0]
+                    elif p[1] == 4:
+                        data.stim3 = p[0]
+            if data.copy:
+                data.copy_trial += 1
             if data.copy_trial == data.total_copy_trials:
                 data.copy = False
                 data.recall = True
@@ -384,21 +411,27 @@ def timerFired(data):
                 data.state = 'ready recall task'
             return
     elif data.state == 'recall correct' or data.state == 'recall wrong':
-        data.feedback_time -= data.timerDelay * 10
+        data.feedback_time -= data.timerDelay * 5
         if data.feedback_time < 0:
             data.state = 'recall task ref'
             data.feedback_time = 2 * 1000
+            data.recall_trial += 1
+            if data.recall_trial == data.total_recall_trials:
+                data.recall = False
+                data.recall_trial = -1
+                data.state = 'end'
     elif data.state == 'recall task ref':
-        data.recall_presentation_time_remaining -= data.timerDelay * 10
+        data.recall_presentation_time_remaining -= data.timerDelay * 5
         if data.recall_presentation_time_remaining < 0:
             data.state = 'recall task canvas'
             data.recall_presentation_time_remaining = 5 * 1000
             return
     elif data.state == 'recall task canvas':
-        data.recall_time_remaining -= data.timerDelay * 10
+        data.recall_time_remaining -= data.timerDelay * 5
         if data.recall_time_remaining < 0:
+            check_correctness(data)
             data.state = 'recall wrong'
-            data.recall_time_remaining = 10 * 1000
+            data.correctness = None
             return
 
 def redrawAll(canvas, data):
@@ -434,6 +467,8 @@ def redrawAll(canvas, data):
         drawCorrect(canvas,data)
     elif data.state == 'recall wrong':
         drawWrong(canvas,data)
+    elif data.state == 'end':
+        drawEnd(canvas,data)
     else:
         return # we should never reach this state
 
@@ -468,7 +503,7 @@ def run(name, condition, width=300, height=300): # thanks koz
     data.width = width
     data.height = height
     data.timerDelay = 5 # milliseconds
-    data.state = 'copy task ref'
+    data.state = 'instructions'
     data.id = name
     data.condition = condition
     init(data)
@@ -484,6 +519,7 @@ def run(name, condition, width=300, height=300): # thanks koz
     timerFiredWrapper(canvas, data)
     # and launch the app
     root.mainloop()  # blocks until window is closed
+    print(data.statistics)
     print("bye!")
 
 def main():
