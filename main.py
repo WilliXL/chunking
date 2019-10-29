@@ -131,11 +131,9 @@ def drawWrong(canvas, data):
 
 def drawCopySwitchCanvas(canvas, data):
     canvas.create_rectangle(0, 0, data.width, data.height, fill='white', width=0)
-    data.state = 'copy task canvas'
 
 def drawCopySwitchRef(canvas, data):
     canvas.create_rectangle(0, 0, data.width, data.height, fill='white', width=0)
-    data.state = 'copy task ref'
 
 def drawEnd(canvas, data):
     canvas.create_text(data.width/2, data.height/2, text="END!", font="Arial 24 bold")
@@ -349,6 +347,7 @@ def init(data):
     data.grid_width = data.rect_width * 4
     data.grid_height = data.rect_height * 4
     data.copy_time_remaining = 15 * 1000 # 15 seconds
+    data.switch_time = 0.5 * 1000 # half a second
     data.correctness = None
     data.feedback_time = 2 * 1000 # 2 seconds
     data.recall_presentation_time_remaining = 5 * 1000 # 5 seconds
@@ -450,6 +449,16 @@ def timerFired(data):
                 data.recall = False
                 data.recall_trial = -1
                 data.state = 'end'
+    elif data.state == 'copy switch canvas':
+        data.switch_time -= data.timerDelay * 5
+        if data.switch_time < 0:
+            data.state = 'copy task canvas'
+            data.switch_time = 0.5 * 1000
+    elif data.state == 'copy switch ref':
+        data.switch_time -= data.timerDelay * 5
+        if data.switch_time < 0:
+            data.state = 'copy task ref'
+            data.switch_time = 0.5 * 1000
     elif data.state == 'recall task ref':
         data.recall_presentation_time_remaining -= data.timerDelay * 5
         if data.recall_presentation_time_remaining < 0:
@@ -481,12 +490,8 @@ def redrawAll(canvas, data):
         drawTaskCanvas(canvas,data)
     elif data.state == 'copy switch canvas':
         drawCopySwitchCanvas(canvas,data)
-        canvas.update()
-        time.sleep(0.5)
     elif data.state == 'copy switch ref':
         drawCopySwitchRef(canvas,data)
-        canvas.update()
-        time.sleep(0.5)
     elif data.state == 'ready recall task':
         drawReadyRecallTask(canvas,data)
     elif data.state == 'copy correct':
