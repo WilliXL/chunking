@@ -405,6 +405,7 @@ def timerFired(data):
     if data.state == 'copy task ref' or data.state == 'copy task canvas':
         data.copy_time_remaining -= data.timerDelay * 5
         if data.copy_time_remaining < 0:
+            check_correctness(data)
             data.state = 'copy wrong'
             data.copy_time_remaining = 15 * 1000
             return
