@@ -127,7 +127,8 @@ def drawCorrect(canvas, data):
     canvas.create_text(data.width/2, data.height/2, text="CORRECT!", font="Arial 24 bold", fill="green")
 
 def drawWrong(canvas, data):
-    canvas.create_text(data.width/2, data.height/2, text="INCORRECT!", font="Arial 24 bold", fill="red")
+    txt = str(int(data.correctness / 64 * 100)) + "% Correct"
+    canvas.create_text(data.width/2, data.height/2, text=txt, font="Arial 24 bold", fill="red")
 
 def drawCopySwitchCanvas(canvas, data):
     canvas.create_rectangle(0, 0, data.width, data.height, fill='white', width=0)
@@ -214,34 +215,34 @@ def mousePressedCopyRef(event, data):
     if switch_button_pressed(event,data):
         data.state = 'copy switch canvas'
     elif done_button_pressed(event,data):
+        data.correctness = None
         check_correctness(data)
         if data.correctness == 8*8:
             data.state = 'copy correct'
         else:
             data.state = 'copy wrong'
-        data.correctness = None
 
 def mousePressedCopyCanvas(event, data):
     fill_rect(event,data)
     if switch_button_pressed(event,data):
         data.state = 'copy switch ref'
     elif done_button_pressed(event,data):
+        data.correctness = None
         check_correctness(data)
         if data.correctness == 8*8:
             data.state = 'copy correct'
         else:
             data.state = 'copy wrong'
-        data.correctness = None
 
 def mousePressedRecallCanvas(event, data):
     fill_rect(event,data)
     if done_button_pressed(event,data):
+        data.correctness = None
         check_correctness(data)
         if data.correctness == 8*8:
             data.state = 'recall correct'
         else:
             data.state = 'recall wrong'
-        data.correctness = None
 
 
 ####################################
@@ -416,6 +417,7 @@ def timerFired(data):
     if data.state == 'copy task ref' or data.state == 'copy task canvas':
         data.copy_time_remaining -= data.timerDelay * 5
         if data.copy_time_remaining < 0:
+            data.correctness = None
             check_correctness(data)
             data.state = 'copy wrong'
             data.copy_time_remaining = 15 * 1000
@@ -480,9 +482,9 @@ def timerFired(data):
     elif data.state == 'recall task canvas':
         data.recall_time_remaining -= data.timerDelay * 5
         if data.recall_time_remaining < 0:
+            data.correctness = None
             check_correctness(data)
             data.state = 'recall wrong'
-            data.correctness = None
             return
 
 def redrawAll(canvas, data):
