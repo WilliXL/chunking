@@ -110,18 +110,18 @@ def drawTaskRef(canvas, data):
 
 def drawInstructions(canvas, data):
     canvas.create_text(data.width/2, data.height/2,
-                       text="Instructions Go Here\nPress [Space] to begin practice",
-                       font="Arial 24")
+                       text="You will begin with 2 practice trials.\nClick the mouse on top of the box to fill in color.\nUse the “To Canvas” and “To Reference” button to switch between the reference and canvas boards\nPress [Space] to begin copy task",
+                       font="Arial 18")
 
 def drawReadyCopyTask(canvas, data):
     canvas.create_text(data.width/2, data.height/2,
-                       text="This concludes the practice trials\nPress [Space] to begin copy task",
-                       font="Arial 24")
+                       text="The time limit is 15 seconds\nYou can refer to reference board at anytime\nClick ‘done’ button after filling out the board\nPress [Space] to begin copy task",
+                       font="Arial 18")
 
 def drawReadyRecallTask(canvas, data):
     canvas.create_text(data.width/2, data.height/2,
-                       text="This concludes the copy trials\nPress [Space] to begin recall task",
-                       font="Arial 24")
+                       text="You will be given 5 seconds to memorize the board\nYou cannot refer back to the reference board after the 5 seconds\n10 seconds will be the time limit to fill in the board\nPress [Space] to begin recall task",
+                       font="Arial 18")
 
 def drawCorrect(canvas, data):
     canvas.create_text(data.width/2, data.height/2, text="CORRECT!", font="Arial 24 bold", fill="green")
@@ -138,6 +138,8 @@ def drawCopySwitchRef(canvas, data):
 def drawEnd(canvas, data):
     canvas.create_text(data.width/2, data.height/2, text="END!", font="Arial 24 bold")
 
+def drawPaused(canvas, data):
+    canvas.create_text(data.width/2, data.height/2, text="PAUSED", font="Arial 24 bold")
 
 
 ####################################
@@ -341,6 +343,7 @@ def init(data):
     data.exp1 = create2dlist()
     data.exp2 = create2dlist()
     data.exp3 = create2dlist()
+    data.prev_state = None
     data.margin = 60
     data.rect_width = 90
     data.rect_height = 90
@@ -364,42 +367,50 @@ def mousePressed(event, data):
         mousePressedRecallCanvas(event,data)
 
 def keyPressed(event, data):
-    if data.state == 'instructions':
-        if event.char == ' ':
-            data.practice = True
-            data.state = 'copy task ref'
-    elif data.state == 'ready copy task':
-        if event.char == ' ':
-            data.practice = False
-            data.copy = True
-            data.state = 'copy task ref'
-            data.trials = data.copy_trials
-            data.trial = data.trials[data.copy_trial]
-            for p in [data.trial[0], data.trial[1], data.trial[2], data.trial[3]]:
-                if p[1] == 1:
-                    data.stim0 = p[0]
-                elif p[1] == 2:
-                    data.stim1 = p[0]
-                elif p[1] == 3:
-                    data.stim2 = p[0]
-                elif p[1] == 4:
-                    data.stim3 = p[0]
-    elif data.state == 'ready recall task':
-        if event.char == ' ':
-            data.copy = False
-            data.recall = True
-            data.state = 'recall task ref'
-            data.trials = data.recall_trials
-            data.trial = data.trials[data.recall_trial]
-            for p in [data.trial[0], data.trial[1], data.trial[2], data.trial[3]]:
-                if p[1] == 1:
-                    data.stim0 = p[0]
-                elif p[1] == 2:
-                    data.stim1 = p[0]
-                elif p[1] == 3:
-                    data.stim2 = p[0]
-                elif p[1] == 4:
-                    data.stim3 = p[0]
+    if data.state != 'paused':
+        print(event.char == 'p')
+        if event.char == 'p':
+            data.prev_state = data.state
+            data.state = 'paused'
+        if data.state == 'instructions':
+            if event.char == ' ':
+                data.practice = True
+                data.state = 'copy task ref'
+        elif data.state == 'ready copy task':
+            if event.char == ' ':
+                data.practice = False
+                data.copy = True
+                data.state = 'copy task ref'
+                data.trials = data.copy_trials
+                data.trial = data.trials[data.copy_trial]
+                for p in [data.trial[0], data.trial[1], data.trial[2], data.trial[3]]:
+                    if p[1] == 1:
+                        data.stim0 = p[0]
+                    elif p[1] == 2:
+                        data.stim1 = p[0]
+                    elif p[1] == 3:
+                        data.stim2 = p[0]
+                    elif p[1] == 4:
+                        data.stim3 = p[0]
+        elif data.state == 'ready recall task':
+            if event.char == ' ':
+                data.copy = False
+                data.recall = True
+                data.state = 'recall task ref'
+                data.trials = data.recall_trials
+                data.trial = data.trials[data.recall_trial]
+                for p in [data.trial[0], data.trial[1], data.trial[2], data.trial[3]]:
+                    if p[1] == 1:
+                        data.stim0 = p[0]
+                    elif p[1] == 2:
+                        data.stim1 = p[0]
+                    elif p[1] == 3:
+                        data.stim2 = p[0]
+                    elif p[1] == 4:
+                        data.stim3 = p[0]
+    else:
+        if event.char == 'p':
+            data.state = data.prev_state
 
 def timerFired(data):
     if data.state == 'copy task ref' or data.state == 'copy task canvas':
@@ -475,8 +486,8 @@ def timerFired(data):
             return
 
 def redrawAll(canvas, data):
-    if data.state == 'setup':
-        drawSetup(canvas,data)
+    if data.state == 'paused':
+        drawPaused(canvas,data)
     elif data.state == 'instructions':
         drawInstructions(canvas,data)
     elif data.state == 'ready copy task':
