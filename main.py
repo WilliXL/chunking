@@ -7,6 +7,7 @@ import argparse
 import stimuli
 import numpy as np
 import pandas as pd
+import myConfig as mc
 
 
 # q1   q2
@@ -345,9 +346,9 @@ def init(data):
     data.exp2 = create2dlist()
     data.exp3 = create2dlist()
     data.prev_state = None
-    data.margin = 60
-    data.rect_width = 90
-    data.rect_height = 90
+    data.margin = mc.margin
+    data.rect_width = mc.rectWidth
+    data.rect_height = mc.rectHeight
     data.grid_width = data.rect_width * 4
     data.grid_height = data.rect_height * 4
     data.copy_time_remaining = 15 * 1000 # 15 seconds
@@ -415,7 +416,7 @@ def keyPressed(event, data):
 
 def timerFired(data):
     if data.state == 'copy task ref' or data.state == 'copy task canvas':
-        data.copy_time_remaining -= data.timerDelay * 5
+        data.copy_time_remaining -= data.timerDelay * mc.timeFactor
         if data.copy_time_remaining < 0:
             data.correctness = None
             check_correctness(data)
@@ -423,7 +424,7 @@ def timerFired(data):
             data.copy_time_remaining = 15 * 1000
             return
     elif data.state == 'copy correct' or data.state == 'copy wrong':
-        data.feedback_time -= data.timerDelay * 5
+        data.feedback_time -= data.timerDelay * mc.timeFactor
         if data.feedback_time < 0:
             data.state = 'copy task ref'
             data.feedback_time = 2 * 1000
@@ -454,7 +455,7 @@ def timerFired(data):
                 data.state = 'ready recall task'
             return
     elif data.state == 'recall correct' or data.state == 'recall wrong':
-        data.feedback_time -= data.timerDelay * 5
+        data.feedback_time -= data.timerDelay * mc.timeFactor
         if data.feedback_time < 0:
             data.state = 'recall task ref'
             data.feedback_time = 2 * 1000
@@ -464,23 +465,23 @@ def timerFired(data):
                 data.recall_trial = -1
                 data.state = 'end'
     elif data.state == 'copy switch canvas':
-        data.switch_time -= data.timerDelay * 5
+        data.switch_time -= data.timerDelay * mc.timeFactor
         if data.switch_time < 0:
             data.state = 'copy task canvas'
             data.switch_time = 0.5 * 1000
     elif data.state == 'copy switch ref':
-        data.switch_time -= data.timerDelay * 5
+        data.switch_time -= data.timerDelay * mc.timeFactor
         if data.switch_time < 0:
             data.state = 'copy task ref'
             data.switch_time = 0.5 * 1000
     elif data.state == 'recall task ref':
-        data.recall_presentation_time_remaining -= data.timerDelay * 5
+        data.recall_presentation_time_remaining -= data.timerDelay * mc.timeFactor
         if data.recall_presentation_time_remaining < 0:
             data.state = 'recall task canvas'
             data.recall_presentation_time_remaining = 5 * 1000
             return
     elif data.state == 'recall task canvas':
-        data.recall_time_remaining -= data.timerDelay * 5
+        data.recall_time_remaining -= data.timerDelay * mc.timeFactor
         if data.recall_time_remaining < 0:
             data.correctness = None
             check_correctness(data)
@@ -578,5 +579,5 @@ def main():
     parser.add_argument("--id", type=str, help="Participant ID")
     parser.add_argument('--cond', type=int, help="Experiment Condition", default=0)
     args = parser.parse_args()
-    run(args.id, args.cond, 1920, 1080)
+    run(args.id, args.cond, mc.screenWidth, mc.screenHeight)
 main()
