@@ -9,3 +9,4 @@
 ## Running Subjects
 1. When you want to run a subject check `subjects.xlsx` on google drive to know what subject ID and condition to enter.
 2. To run the program open terminal at the folder and enter `python3 main.py --id [ID] --cond [condition]`, replacing [ID] and [condition] with what it says in the google sheets.
+3. After running the subjects, email the `[ID].csv` in the `data` folder to wxl@andrew.cmu.edu 
